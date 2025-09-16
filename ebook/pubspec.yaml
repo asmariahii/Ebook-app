@@ -37,6 +37,13 @@ dependencies:
   google_nav_bar: ^5.0.7
   readmore: ^3.0.0
   flutter_intl_phone_field: ^0.0.7
+  google_fonts: ^6.2.1
+  get: ^4.7.2
+  http: ^1.4.0
+  shared_preferences: ^2.5.3
+  jwt_decoder: ^2.0.1
+
+
 
 dev_dependencies:
   flutter_test:

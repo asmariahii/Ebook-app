@@ -1,5 +1,13 @@
+import 'package:ebook/screens/home/route_pages.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:form_field_validator/form_field_validator.dart';
+import 'package:get/instance_manager.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../utils/constants/colors.dart';
+import 'package:ebook/controllers/auth_controller.dart';
+import 'package:ebook/models/user_model.dart';
+import '../nav_pages/nav_home_page.dart';
 import 'signup_page.dart';
 
 class SigninPage extends StatefulWidget {
@@ -11,21 +19,55 @@ class SigninPage extends StatefulWidget {
 
 class _SigninPageState extends State<SigninPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  late TextEditingController _emailController;
+  late TextEditingController _passwordController;
   bool _passwordInvisible = true;
 
-  String? _email;
-  String? _password;
+  final AuthController controller = Get.put(AuthController());
+  late SharedPreferences prefs;
 
-  void _submitForm() {
+  void initSharedPref() async {
+    prefs = await SharedPreferences.getInstance();
+  }
+
+  @override
+  void initState() {
+    _emailController = TextEditingController();
+    _passwordController = TextEditingController();
+    initSharedPref();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  void _submitForm() async {
     if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
-
-      print("Email: $_email");
-      print("Password: $_password");
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Welcome back, $_email")),
+      final user = UserModel(
+        email: _emailController.text,
+        password: _passwordController.text,
       );
+
+      var result = await controller.signinController(user);
+
+      if (result['status'] == true) {
+        String token = result['token'];
+        prefs.setString('token', token);
+
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => RoutePages(token: token)),
+          (route) => false,
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result['error'])),
+        );
+      }
     }
   }
 
@@ -34,11 +76,9 @@ class _SigninPageState extends State<SigninPage> {
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
-          title: Text(
-            "E-Book App",
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
+          title: Text("E-Book App", style: TextStyle(fontWeight: FontWeight.bold)),
           centerTitle: true,
+          backgroundColor: TColors.primary,
         ),
         body: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
@@ -50,8 +90,7 @@ class _SigninPageState extends State<SigninPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Center(
-                    child: Icon(Icons.menu_book,
-                        size: 70, color: TColors.primary),
+                    child: Icon(Icons.menu_book, size: 70, color: TColors.primary),
                   ),
                   const SizedBox(height: 20),
                   Text(
@@ -62,25 +101,24 @@ class _SigninPageState extends State<SigninPage> {
 
                   // Email
                   TextFormField(
-                    decoration: const InputDecoration(
+                    controller: _emailController,
+                    decoration: InputDecoration(
                       labelText: "Enter your email",
-                      prefixIcon: Icon(Icons.email_outlined),
+                      prefixIcon: const Icon(Icons.email_outlined),
+                      filled: true,
+                      fillColor: TColors.lightGrey,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
                     ),
-                    onSaved: (value) => _email = value,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Email is required";
-                      }
-                      if (!value.contains("@")) {
-                        return "Enter a valid email";
-                      }
-                      return null;
-                    },
+                    validator: MultiValidator([
+                      RequiredValidator(errorText: "Email is required"),
+                      EmailValidator(errorText: "Enter a valid email"),
+                    ]).call,
                   ),
                   const SizedBox(height: 10),
 
                   // Password
                   TextFormField(
+                    controller: _passwordController,
                     obscureText: _passwordInvisible,
                     decoration: InputDecoration(
                       labelText: "Enter your password",
@@ -92,29 +130,25 @@ class _SigninPageState extends State<SigninPage> {
                           });
                         },
                         icon: Icon(
-                          _passwordInvisible
-                              ? Icons.visibility_off
-                              : Icons.visibility,
+                          _passwordInvisible ? Icons.visibility_off : Icons.visibility,
                         ),
                       ),
+                      filled: true,
+                      fillColor: TColors.lightGrey,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
                     ),
-                    onSaved: (value) => _password = value,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Password is required";
-                      }
-                      if (value.length < 6) {
-                        return "Password must be at least 6 characters";
-                      }
-                      return null;
-                    },
+                    validator: MultiValidator([
+                      RequiredValidator(errorText: "Password is required"),
+                      MinLengthValidator(6, errorText: "Password must be at least 6 characters"),
+                    ]).call,
                   ),
+                  const SizedBox(height: 10),
 
                   Align(
                     alignment: Alignment.bottomRight,
                     child: TextButton(
                       onPressed: () {
-                        // 👉 Forgot password logic
+                        // Forgot password logic
                       },
                       child: const Text("Forgot password?"),
                     ),
@@ -125,7 +159,9 @@ class _SigninPageState extends State<SigninPage> {
                   ElevatedButton(
                     onPressed: _submitForm,
                     style: ElevatedButton.styleFrom(
+                      backgroundColor: TColors.primary,
                       minimumSize: const Size(double.infinity, 50),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                     ),
                     child: const Text("Sign in"),
                   ),
@@ -137,8 +173,7 @@ class _SigninPageState extends State<SigninPage> {
                       onPressed: () {
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(
-                              builder: (context) => const SignupPage()),
+                          MaterialPageRoute(builder: (_) => const SignupPage()),
                         );
                       },
                       child: RichText(
@@ -149,10 +184,7 @@ class _SigninPageState extends State<SigninPage> {
                             const TextSpan(text: "Don't have an account? "),
                             TextSpan(
                               text: "Register",
-                              style: TextStyle(
-                                color: TColors.primary,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: TextStyle(color: TColors.primary, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),

@@ -3,16 +3,16 @@ const jwt = require("jsonwebtoken");
 
 class UserServices{
  
-    static async registerUser(email,password){
-        try{
-                console.log("-----Email --- Password-----",email,password);
-                
-                const createUser = new UserModel({email,password});
-                return await createUser.save();
-        }catch(err){
-            throw err;
-        }
+static async registerUser({ name, email, password }) {
+    try {
+        console.log("-----User Data-----", { name, email, password });
+        const createUser = new UserModel({ name, email, password });
+        return await createUser.save();
+    } catch (err) {
+        throw err;
     }
+}
+
 
     static async getUserByEmail(email){
         try{

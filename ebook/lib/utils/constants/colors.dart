@@ -8,6 +8,7 @@ class TColors {
   static const Color darkGrey = Color(0xFF282828);
   static const Color grey = Color(0xFF777777);
   static const Color white = Color(0xFFFFFFFF);
+  static const Color lightGrey = Color(0xFFE0E0E0); // define light grey for form fields
 
   // Text Colors
   static const Color textPrimary = Color(0xFF4CAF50);

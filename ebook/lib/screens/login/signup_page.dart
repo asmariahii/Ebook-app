@@ -1,7 +1,10 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart';
-
+import 'package:get/get.dart';
 import '../../utils/constants/colors.dart';
+import 'package:ebook/controllers/auth_controller.dart';
+import 'package:ebook/models/user_model.dart';
 import 'signin_page.dart';
 
 class SignupPage extends StatefulWidget {
@@ -12,18 +15,19 @@ class SignupPage extends StatefulWidget {
 }
 
 class _SignupPageState extends State<SignupPage> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   late TextEditingController _usernameController;
   late TextEditingController _emailController;
   late TextEditingController _passwordController;
-  late GlobalKey<FormState> _formkey;
   bool _passwordInvisible = true;
+
+  final AuthController controller = Get.put(AuthController());
 
   @override
   void initState() {
     _usernameController = TextEditingController();
     _emailController = TextEditingController();
     _passwordController = TextEditingController();
-    _formkey = GlobalKey<FormState>();
     super.initState();
   }
 
@@ -33,6 +37,34 @@ class _SignupPageState extends State<SignupPage> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _submitForm() async {
+    if (_formKey.currentState!.validate()) {
+      final user = UserModel(
+        name: _usernameController.text,
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+
+      var result = await controller.signupController(user);
+
+      if (result['status'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result['success'])),
+        );
+
+        // Navigate to Sign In after successful signup
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const SigninPage()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result['error'])),
+        );
+      }
+    }
   }
 
   @override
@@ -48,13 +80,15 @@ class _SignupPageState extends State<SignupPage> {
             ),
           ),
           centerTitle: true,
+          backgroundColor: Colors.white,
+          foregroundColor: TColors.primary,
         ),
         body: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
           width: double.infinity,
           child: SingleChildScrollView(
             child: Form(
-              key: _formkey,
+              key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -92,9 +126,7 @@ class _SignupPageState extends State<SignupPage> {
                     ),
                     validator: MultiValidator([
                       RequiredValidator(errorText: "* Required"),
-                      EmailValidator(
-                        errorText: "Please enter a valid email address",
-                      ),
+                      EmailValidator(errorText: "Please enter a valid email address"),
                     ]).call,
                   ),
                   const SizedBox(height: 10),
@@ -114,39 +146,27 @@ class _SignupPageState extends State<SignupPage> {
                           });
                         },
                         icon: Icon(
-                          _passwordInvisible
-                              ? Icons.visibility_off
-                              : Icons.visibility,
+                          _passwordInvisible ? Icons.visibility_off : Icons.visibility,
                         ),
                       ),
                     ),
                     validator: MultiValidator([
                       RequiredValidator(errorText: "* Required"),
-                      MinLengthValidator(
-                        6,
-                        errorText: "Password must be at least 6 characters.",
-                      ),
-                      MaxLengthValidator(
-                        15,
-                        errorText: "Password must not exceed 15 characters.",
-                      ),
+                      MinLengthValidator(6, errorText: "Password must be at least 6 characters."),
+                      MaxLengthValidator(15, errorText: "Password must not exceed 15 characters."),
                     ]).call,
                   ),
                   const SizedBox(height: 20),
 
                   // Sign up button
                   ElevatedButton(
-                    onPressed: () {
-                      if (_formkey.currentState!.validate()) {
-                        print("✅ Signup format valid");
-                        print("Username: ${_usernameController.text}");
-                        print("Email: ${_emailController.text}");
-                      } else {
-                        print("❌ Signup format invalid");
-                      }
-                    },
+                    onPressed: _submitForm,
                     style: ElevatedButton.styleFrom(
+                      backgroundColor: TColors.primary,
                       minimumSize: const Size(double.infinity, 50),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
                     ),
                     child: const Text("Sign up"),
                   ),

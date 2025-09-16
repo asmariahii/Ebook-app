@@ -1,23 +1,29 @@
 const UserServices = require('../services/user.service');
 
+
 exports.register = async (req, res, next) => {
     try {
-        console.log("---req body---", req.body);
-        const { email, password } = req.body;
+        const { name, email, password } = req.body;
+
+        if (!name || !email || !password) {
+            return res.status(400).json({ status: false, error: "Name, email and password are required" });
+        }
+
         const duplicate = await UserServices.getUserByEmail(email);
         if (duplicate) {
-            throw new Error(`UserName ${email}, Already Registered`)
+            return res.status(400).json({ status: false, error: `UserName ${email} already registered` });
         }
-        const response = await UserServices.registerUser(email, password);
+
+ const response = await UserServices.registerUser({ name, email, password });
 
         res.json({ status: true, success: 'User registered successfully' });
 
-
     } catch (err) {
-        console.log("---> err -->", err);
-        next(err);
+        console.error(err);
+        res.status(500).json({ status: false, error: err.message });
     }
-}
+};
+
 
 exports.login = async (req, res, next) => {
     try {
@@ -41,7 +47,7 @@ exports.login = async (req, res, next) => {
         // Creating Token
 
         let tokenData;
-        tokenData = { _id: user._id, email: user.email };
+        tokenData = { _id: user._id, email: user.email, name: user.name };
     
 
         const token = await UserServices.generateAccessToken(tokenData,"secret","1h")

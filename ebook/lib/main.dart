@@ -1,31 +1,29 @@
-import 'package:ebook/utils/theme/custom_themes/test_showdialog.dart';
 import 'package:flutter/material.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ebook/screens/nav_pages/nav_home_page.dart';
+import 'package:ebook/screens/home/route_pages.dart';
 
-import 'screens/home/route_pages.dart';
-import 'screens/login/signin_page.dart';
-import 'screens/login/signup_page.dart';
-import 'screens/login/splash_page.dart';
 
-import 'utils/theme/theme.dart';
+import 'package:ebook/screens/login/signin_page.dart';
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? mytoken = prefs.getString('token');
 
-void main() {
-  runApp(const MyApp());
+  runApp(MyApp(token: mytoken));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final String? token;
+  const MyApp({super.key, this.token});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        debugShowCheckedModeBanner: false, 
-
-      title: 'Flutter Demo',
-      themeMode: ThemeMode.system,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-
-      home: RoutePages(),
+      home: token != null && !JwtDecoder.isExpired(token!)
+          ? RoutePages(token: token!) // pass token here
+          : SigninPage(),
     );
   }
 }
