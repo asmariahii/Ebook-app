@@ -1,6 +1,10 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const UserRoute = require("./routes/user.router");
+const bookRoutes = require("./routes/book.routes");
+const path = require("path");
+
+
 const cors = require("cors");
 
 const app = express();
@@ -13,6 +17,11 @@ app.use(cors());
 
 // Mount your routes under /auth
 app.use("/auth", UserRoute);
+app.use("/books", bookRoutes);
+app.use("/uploads", express.static(path.join(__dirname, "assets/images")));
+
+
+
 
 // Error handling middleware
 app.use((err, req, res, next) => {

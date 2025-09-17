@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../models/book_model.dart';
-import '../components/nouveatue_widget.dart';
 import '../components/trending_widget.dart';
 import '../../login/signin_page.dart';
+import '../components/nouveatue_widget.dart';
+import '../../../services/book_service.dart';
 
 class NavHomePage extends StatefulWidget {
   final String token; // Required token parameter
@@ -16,23 +17,26 @@ class NavHomePage extends StatefulWidget {
 }
 
 class _NavHomePageState extends State<NavHomePage> {
-  late String name; // use name instead of email
+  late String name;
   late String userId;
   late SharedPreferences prefs;
+
+  List<BookModel> allBooks = [];
+  List<BookModel> trendingBooks = [];
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _decodeToken();
     _initSharedPref();
+    _loadBooks();
   }
 
-  // Decode JWT to get name and userId
   void _decodeToken() {
     Map<String, dynamic> decodedToken = JwtDecoder.decode(widget.token);
-    name = decodedToken['name'] ?? "User"; // Now this will be the actual name
+    name = decodedToken['name'] ?? "User";
     userId = decodedToken['_id'];
-    print("User ID: $userId, Name: $name");
   }
 
   void _initSharedPref() async {
@@ -48,6 +52,21 @@ class _NavHomePageState extends State<NavHomePage> {
     );
   }
 
+  void _loadBooks() async {
+    try {
+      final books = await BookService.fetchBooks();
+      final trending = await BookService.fetchTrending();
+      setState(() {
+        allBooks = books;
+        trendingBooks = trending;
+        isLoading = false;
+      });
+    } catch (e) {
+      print("Error fetching books: $e");
+      setState(() => isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -55,10 +74,7 @@ class _NavHomePageState extends State<NavHomePage> {
         appBar: AppBar(
           foregroundColor: Colors.black,
           backgroundColor: Colors.white,
-          title: Text(
-            "Welcome, $name", // display user name
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w400),
-          ),
+          title: Text("Welcome, $name"),
           centerTitle: true,
           actions: [
             IconButton(
@@ -67,77 +83,56 @@ class _NavHomePageState extends State<NavHomePage> {
             ),
           ],
         ),
-        body: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(5),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Top Row with actions
-                Row(
+        body: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(5),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Top Row
+                    Row(
+                      children: [
+                        Text(
+                          "Made for you",
+                          style: Theme.of(context).textTheme.headlineMedium,
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          onPressed: () {},
+                          icon: const Icon(Icons.notifications_none_rounded),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+
+                    // New Releases Horizontal List
+                    SizedBox(
+                      height: 150,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: allBooks.length,
+                        itemBuilder: (context, index) =>
+                            NouveauteWidget(bookModel: allBooks[index]),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Trending Vertical List
                     Text(
-                      "Made for you",
+                      "Trending now",
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
-                    const Spacer(),
-                    IconButton(
-                      onPressed: () {},
-                      icon: const Icon(Icons.notifications_none_rounded),
-                    ),
-                    IconButton(
-                      onPressed: () {},
-                      icon: const Icon(Icons.replay_rounded),
-                    ),
-                    IconButton(
-                      onPressed: () {},
-                      icon: const Icon(Icons.settings_rounded),
+                    ListView.builder(
+                      itemCount: trendingBooks.length,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemBuilder: (context, index) =>
+                          TrendingWidget(bookModel: trendingBooks[index]),
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
-
-                // New Releases Horizontal List
-                SizedBox(
-                  height: 150,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: bookList.length,
-                    itemBuilder: (context, index) =>
-                        NouveauteWidget(bookModel: bookList[index]),
-                  ),
-                ),
-                const SizedBox(height: 10),
-
-                // Trending Horizontal List
-                SizedBox(
-                  height: 150,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: trendingBooks.length,
-                    itemBuilder: (context, index) =>
-                        NouveauteWidget(bookModel: trendingBooks[index]),
-                  ),
-                ),
-                const SizedBox(height: 10),
-
-                // Trending Vertical List
-                Text(
-                  "Trending now",
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                ListView.builder(
-                  itemCount: bookList.length,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemBuilder: (context, index) =>
-                      TrendingWidget(bookModel: bookList[index]),
-                ),
-              ],
-            ),
-          ),
-        ),
+              ),
       ),
     );
   }
