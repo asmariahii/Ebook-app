@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:readmore/readmore.dart';
+import '../../pages/pdf_view_page.dart';
 
 class Detailpage extends StatefulWidget {
   const Detailpage({super.key, required this.bookModel});
@@ -19,7 +20,10 @@ class _DetailpageState extends State<Detailpage> {
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
-          title: SvgPicture.asset("assets/images/logo-spotify.svg", height: 30),
+          title: SvgPicture.asset(
+            "assets/images/logo-spotify.svg",
+            height: 30,
+          ),
         ),
         body: Padding(
           padding: const EdgeInsets.all(10),
@@ -28,11 +32,11 @@ class _DetailpageState extends State<Detailpage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Hero(
-                  tag: widget.bookModel.id ?? UniqueKey(),
+                  tag: widget.bookModel.id,
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child: Image.network(
-                      widget.bookModel.cover, // <-- use network URL
+                      widget.bookModel.cover,
                       width: double.infinity,
                       height: 300,
                       fit: BoxFit.cover,
@@ -74,13 +78,27 @@ class _DetailpageState extends State<Detailpage> {
                         color: TColors.primary,
                       ),
                     ),
-                    IconButton(
-                      onPressed: () {},
-                      icon: Icon(
-                        CupertinoIcons.play_rectangle,
-                        color: TColors.primary,
-                      ),
-                    ),
+                    // PDF button
+IconButton(
+  onPressed: () {
+    if (widget.bookModel.file.isNotEmpty) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PdfViewPage(
+            url: widget.bookModel.file, // just use the file URL
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("PDF not available")),
+      );
+    }
+  },
+  icon: Icon(CupertinoIcons.doc_text, color: TColors.primary),
+),
+
                   ],
                 ),
                 const SizedBox(height: 10),
