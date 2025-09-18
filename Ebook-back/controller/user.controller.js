@@ -1,7 +1,6 @@
 const { UserServices } = require('../services/user.service');
 const Book = require("../model/book.model");
-
-
+const User = require("../model/user.model"); // ADD THIS LINE - WAS MISSING!
 
 exports.register = async (req, res, next) => {
     try {
@@ -16,7 +15,7 @@ exports.register = async (req, res, next) => {
             return res.status(400).json({ status: false, error: `UserName ${email} already registered` });
         }
 
- const response = await UserServices.registerUser({ name, email, password });
+        const response = await UserServices.registerUser({ name, email, password });
 
         res.json({ status: true, success: 'User registered successfully' });
 
@@ -26,10 +25,8 @@ exports.register = async (req, res, next) => {
     }
 };
 
-
 exports.login = async (req, res, next) => {
     try {
-
         const { email, password } = req.body;
 
         if (!email || !password) {
@@ -47,11 +44,8 @@ exports.login = async (req, res, next) => {
         }
 
         // Creating Token
-
-        let tokenData;
-        tokenData = { _id: user._id, email: user.email, name: user.name };
+        let tokenData = { _id: user._id, email: user.email, name: user.name };
     
-
         const token = await UserServices.generateAccessToken(tokenData,"secret","1h")
 
         res.status(200).json({ status: true, success: "sendData", token: token });
@@ -64,6 +58,8 @@ exports.login = async (req, res, next) => {
 exports.addToFavorites = async (req, res) => {
   try {
     const { bookId } = req.body;
+    console.log('🔥 ADD TO FAVORITES:', { bookId, userId: req.user._id }); // Debug log
+    
     if (!bookId) return res.status(400).json({ status: false, error: "bookId is required" });
 
     const user = req.user; // set by verifyToken
@@ -77,19 +73,152 @@ exports.addToFavorites = async (req, res) => {
     user.favorites.push(bookId);
     await user.save();
 
+    console.log('✅ ADDED TO FAVORITES:', bookId); // Debug log
     res.status(200).json({ status: true, success: "Book added to favorites", data: user.favorites });
   } catch (err) {
-    console.error(err);
+    console.error('❌ ADD TO FAVORITES ERROR:', err);
     res.status(500).json({ status: false, error: err.message });
   }
 };
 
 exports.getFavorites = async (req, res) => {
   try {
+    console.log('📚 GET FAVORITES:', { userId: req.user._id }); // Debug log
+    
+    // NOW User is imported, so this works!
     const user = await User.findById(req.user._id).populate("favorites");
-    res.status(200).json({ status: true, data: user.favorites });
+    
+    if (!user) {
+      return res.status(404).json({ status: false, error: "User not found" });
+    }
+    
+    const favorites = user.favorites || [];
+    console.log('✅ FAVORITES COUNT:', favorites.length); // Debug log
+    
+    res.status(200).json({ 
+      status: true, 
+      data: favorites,
+      count: favorites.length 
+    });
   } catch (err) {
-    console.error(err);
+    console.error('❌ GET FAVORITES ERROR:', err);
     res.status(500).json({ status: false, error: err.message });
   }
+};
+
+// ADD THESE NEW METHODS FOR COMPLETE FAVORITES FUNCTIONALITY
+
+// Remove from favorites
+exports.removeFromFavorites = async (req, res) => {
+  try {
+    const { bookId } = req.body;
+    console.log('💔 REMOVE FROM FAVORITES:', { bookId, userId: req.user._id });
+    
+    if (!bookId) return res.status(400).json({ status: false, error: "bookId is required" });
+
+    const user = req.user;
+    const book = await Book.findById(bookId);
+    if (!book) return res.status(404).json({ status: false, error: "Book not found" });
+
+    const favoriteIndex = user.favorites.indexOf(bookId);
+    if (favoriteIndex === -1) {
+      return res.status(400).json({ status: false, error: "Book not in favorites" });
+    }
+
+    user.favorites.splice(favoriteIndex, 1);
+    await user.save();
+
+    console.log('✅ REMOVED FROM FAVORITES:', bookId);
+    res.status(200).json({ status: true, success: "Book removed from favorites", data: user.favorites });
+  } catch (err) {
+    console.error('❌ REMOVE FROM FAVORITES ERROR:', err);
+    res.status(500).json({ status: false, error: err.message });
+  }
+};
+
+// Check if book is favorite
+exports.isFavorite = async (req, res) => {
+  try {
+    const { bookId } = req.body;
+    console.log('❓ CHECK FAVORITE:', { bookId, userId: req.user._id });
+    
+    if (!bookId) return res.status(400).json({ status: false, error: "bookId is required" });
+
+    const user = req.user;
+    const isFavorite = user.favorites.includes(bookId);
+
+    console.log('✅ IS FAVORITE:', isFavorite);
+    res.status(200).json({ 
+      status: true, 
+      data: { 
+        bookId, 
+        isFavorite,
+        favorites: user.favorites 
+      } 
+    });
+  } catch (err) {
+    console.error('❌ CHECK FAVORITE ERROR:', err);
+    res.status(500).json({ status: false, error: err.message });
+  }
+};
+
+// Toggle favorite (add or remove)
+exports.toggleFavorite = async (req, res) => {
+  try {
+    const { bookId } = req.body;
+    console.log('🔄 TOGGLE FAVORITE:', { bookId, userId: req.user._id });
+    
+    if (!bookId) return res.status(400).json({ status: false, error: "bookId is required" });
+
+    const user = req.user;
+    const book = await Book.findById(bookId);
+    if (!book) return res.status(404).json({ status: false, error: "Book not found" });
+
+    const isCurrentlyFavorite = user.favorites.includes(bookId);
+    
+    if (isCurrentlyFavorite) {
+      // Remove from favorites
+      const favoriteIndex = user.favorites.indexOf(bookId);
+      user.favorites.splice(favoriteIndex, 1);
+      await user.save();
+      console.log('✅ REMOVED FROM FAVORITES (TOGGLE)');
+      res.status(200).json({ 
+        status: true, 
+        success: "Book removed from favorites", 
+        data: { 
+          bookId, 
+          isFavorite: false,
+          favorites: user.favorites 
+        } 
+      });
+    } else {
+      // Add to favorites
+      user.favorites.push(bookId);
+      await user.save();
+      console.log('✅ ADDED TO FAVORITES (TOGGLE)');
+      res.status(200).json({ 
+        status: true, 
+        success: "Book added to favorites", 
+        data: { 
+          bookId, 
+          isFavorite: true,
+          favorites: user.favorites 
+        } 
+      });
+    }
+  } catch (err) {
+    console.error('❌ TOGGLE FAVORITE ERROR:', err);
+    res.status(500).json({ status: false, error: err.message });
+  }
+};
+
+// Export all methods
+module.exports = {
+  register: exports.register,
+  login: exports.login,
+  addToFavorites: exports.addToFavorites,
+  getFavorites: exports.getFavorites,
+  removeFromFavorites: exports.removeFromFavorites,
+  isFavorite: exports.isFavorite,
+  toggleFavorite: exports.toggleFavorite
 };

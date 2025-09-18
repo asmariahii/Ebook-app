@@ -11,4 +11,6 @@ router.get("/", bookController.getBooks);
 // Get trending books
 router.get("/trending", bookController.getTrending);
 
+router.get("/:id", bookController.getBookById); // ADD THIS LINE
+
 module.exports = router;

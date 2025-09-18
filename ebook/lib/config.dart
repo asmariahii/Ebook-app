@@ -9,4 +9,5 @@ const login = "${baseUrl}auth/login";
 const booksUrl = "${baseUrl}books";        // GET all books / POST new book
 const trendingBooksUrl = "${baseUrl}books/trending"; // GET trending books
 const favoritesUrl = "${baseUrl}auth/favorites";
+const favoritesRemoveUrl = "${baseUrl}auth/favorites/remove"; 
 

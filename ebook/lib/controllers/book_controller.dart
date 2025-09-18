@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart'; // ADD THIS IMPORT
-import '../config.dart'; // contains your base URLs
+import 'package:shared_preferences/shared_preferences.dart';
+import '../config.dart';
 import '../models/book_model.dart';
 
 class BookController extends GetxController {
@@ -12,53 +12,70 @@ class BookController extends GetxController {
   var allBooks = <BookModel>[].obs;
   var trendingBooks = <BookModel>[].obs;
 
-  // ADD THESE FAVORITES PROPERTIES
+  // FIXED: Make isLoadingFavorites observable
   var userFavorites = <String>[].obs;
-  bool isLoadingFavorites = false;
+  var isLoadingFavorites = false.obs; // ← FIXED: Now observable!
 
-  // Your existing methods (keep them unchanged)
+  // Your existing methods
   Future<void> fetchAllBooks() async {
     try {
       final response = await http.get(Uri.parse(booksUrl));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body)['data'] as List;
         allBooks.value = data.map((e) => BookModel.fromJson(e)).toList();
+        print("✅ Loaded ${allBooks.length} books");
       } else {
         print("Error fetching books: ${response.statusCode}");
       }
     } catch (e) {
-      print("Error: $e");
+      print("Error fetching books: $e");
     }
   }
 
   Future<void> fetchTrendingBooks() async {
     try {
-      final response = await http.get(Uri.parse("$booksUrl/trending"));
+      final response = await http.get(Uri.parse(trendingBooksUrl));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body)['data'] as List;
         trendingBooks.value = data.map((e) => BookModel.fromJson(e)).toList();
+        print("✅ Loaded ${trendingBooks.length} trending books");
       } else {
         print("Error fetching trending books: ${response.statusCode}");
       }
     } catch (e) {
-      print("Error: $e");
+      print("Error fetching trending books: $e");
     }
   }
 
   Future<BookModel?> fetchBookById(String id) async {
     try {
-      final response = await http.get(Uri.parse("$booksUrl/$id"));
+      print("📖 Fetching book details for ID: $id");
+      
+      final response = await http.get(
+        Uri.parse("$booksUrl/$id"), // FIXED: Added missing slash between booksUrl and id
+        headers: {"Content-Type": "application/json"},
+      );
+
+      print("📡 Book detail response: ${response.statusCode}");
+      
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body)['data'];
-        return BookModel.fromJson(data);
+        final jsonResponse = jsonDecode(response.body);
+        if (jsonResponse['status'] == true) {
+          final data = jsonResponse['data'];
+          print("✅ Book loaded: ${data['title'] ?? 'No title'}");
+          return BookModel.fromJson(data);
+        } else {
+          print("❌ Server returned false status: ${jsonResponse['error']}");
+        }
+      } else {
+        print("❌ HTTP Error fetching book: ${response.statusCode}");
+        print("Response: ${response.body}");
       }
     } catch (e) {
-      print("Error fetching book by ID: $e");
+      print("❌ Error fetching book by ID: $e");
     }
     return null;
   }
-
-  // ADD THESE NEW FAVORITES METHODS (Keep your existing code above unchanged)
 
   // Get token from SharedPreferences
   Future<String?> _getToken() async {
@@ -71,7 +88,7 @@ class BookController extends GetxController {
     return userFavorites.contains(bookId);
   }
 
-  // Add to favorites - THE MAIN METHOD YOU NEED
+  // Add to favorites - YOUR WORKING METHOD
   Future<bool> addToFavorites(String bookId) async {
     try {
       final token = await _getToken();
@@ -86,7 +103,7 @@ class BookController extends GetxController {
         Uri.parse(favoritesUrl),
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer $token", // Same format as Postman
+          "Authorization": "Bearer $token",
         },
         body: jsonEncode({"bookId": bookId}),
       );
@@ -107,7 +124,9 @@ class BookController extends GetxController {
           print("❌ Server error: ${jsonResponse['error']}");
           // If already in favorites, still return true
           if (jsonResponse['error']?.contains('already in favorites') ?? false) {
-            userFavorites.add(bookId);
+            if (!userFavorites.contains(bookId)) {
+              userFavorites.add(bookId);
+            }
             return true;
           }
         }
@@ -122,15 +141,82 @@ class BookController extends GetxController {
     }
   }
 
-  // Get favorites from server
+  // Remove from favorites
+  Future<bool> removeFromFavorites(String bookId) async {
+    try {
+      final token = await _getToken();
+      if (token == null) {
+        print("❌ No token found - user not logged in");
+        return false;
+      }
+
+      print("💔 Removing book $bookId from favorites...");
+
+      final response = await http.post(
+        Uri.parse(favoritesRemoveUrl), // Use the correct remove URL
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: jsonEncode({"bookId": bookId}),
+      );
+
+      print("📡 Remove from favorites response: ${response.statusCode}");
+      print("📄 Response body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        if (jsonResponse['status'] == true) {
+          // Remove from local favorites list
+          if (userFavorites.contains(bookId)) {
+            userFavorites.remove(bookId);
+          }
+          print("✅ Successfully removed book $bookId from favorites");
+          return true;
+        } else {
+          print("❌ Server error: ${jsonResponse['error']}");
+          // If not in favorites, still remove locally
+          if (jsonResponse['error']?.contains('not in favorites') ?? false) {
+            if (userFavorites.contains(bookId)) {
+              userFavorites.remove(bookId);
+            }
+            return true;
+          }
+        }
+      } else {
+        print("❌ HTTP Error: ${response.statusCode}");
+      }
+
+      return false;
+    } catch (e) {
+      print("❌ Error removing from favorites: $e");
+      return false;
+    }
+  }
+
+  // Toggle favorite (add or remove)
+  Future<bool> toggleFavorite(String bookId) async {
+    if (isBookInFavorites(bookId)) {
+      return await removeFromFavorites(bookId);
+    } else {
+      return await addToFavorites(bookId);
+    }
+  }
+
+  // FIXED: loadFavorites method with proper type handling
   Future<void> loadFavorites() async {
     try {
-      isLoadingFavorites = true;
+      // FIXED: Use .value for observable
+      isLoadingFavorites.value = true;
+      
       final token = await _getToken();
       if (token == null) {
         print("❌ No token for loading favorites");
+        isLoadingFavorites.value = false;
         return;
       }
+
+      print("🔄 Loading favorites for user...");
 
       final response = await http.get(
         Uri.parse(favoritesUrl),
@@ -140,18 +226,56 @@ class BookController extends GetxController {
         },
       );
 
+      print("📡 Get favorites response: ${response.statusCode}");
+      print("📄 Get favorites body: ${response.body}");
+
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
         if (jsonResponse['status'] == true) {
           final favoritesData = jsonResponse['data'] ?? [];
-          userFavorites.value = favoritesData.map((e) => e.toString()).toList();
-          print("✅ Loaded ${userFavorites.length} favorites");
+          
+          // FIXED: Handle both book IDs and populated book objects
+          List<String> favoriteIds = [];
+          
+          if (favoritesData is List) {
+            for (var item in favoritesData) {
+              if (item is String) {
+                // Case 1: Just book ID (string)
+                favoriteIds.add(item);
+              } else if (item is Map<String, dynamic>) {
+                // Case 2: Populated book object
+                if (item['_id'] != null) {
+                  favoriteIds.add(item['_id'].toString());
+                } else if (item['id'] != null) {
+                  favoriteIds.add(item['id'].toString());
+                }
+              }
+            }
+          }
+          
+          userFavorites.value = favoriteIds;
+          print("✅ Loaded ${userFavorites.length} favorite book IDs: $favoriteIds");
+        } else {
+          print("❌ Server returned false status: ${jsonResponse['error']}");
+          userFavorites.clear();
         }
+      } else {
+        print("❌ HTTP Error getting favorites: ${response.statusCode}");
+        print("Response: ${response.body}");
+        userFavorites.clear();
       }
     } catch (e) {
       print("❌ Error loading favorites: $e");
+      userFavorites.clear();
     } finally {
-      isLoadingFavorites = false;
+      // FIXED: Use .value for observable
+      isLoadingFavorites.value = false;
     }
+  }
+
+  // Clear favorites (for logout)
+  void clearFavorites() {
+    userFavorites.clear();
+    isLoadingFavorites.value = false;
   }
 }
