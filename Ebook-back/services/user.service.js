@@ -1,38 +1,46 @@
 const UserModel = require("../model/user.model");
 const jwt = require("jsonwebtoken");
 
-class UserServices{
- 
-static async registerUser({ name, email, password }) {
+class UserServices {
+  static async registerUser({ name, email, password }) {
     try {
-        console.log("-----User Data-----", { name, email, password });
-        const createUser = new UserModel({ name, email, password });
-        return await createUser.save();
+      const createUser = new UserModel({ name, email, password });
+      return await createUser.save();
     } catch (err) {
-        throw err;
+      throw err;
     }
+  }
+
+  static async getUserByEmail(email) {
+    return await UserModel.findOne({ email });
+  }
+
+  static async checkUser(email) {
+    return await UserModel.findOne({ email });
+  }
+
+  static async generateAccessToken(tokenData, JWTSecret_Key, JWT_EXPIRE) {
+    return jwt.sign(tokenData, JWTSecret_Key, { expiresIn: JWT_EXPIRE });
+  }
 }
 
+// Middleware
+const verifyToken = async (req, res, next) => {
+  try {
+    const authHeader = req.headers["authorization"];
+    if (!authHeader) return res.status(401).json({ status: false, error: "No token provided" });
 
-    static async getUserByEmail(email){
-        try{
-            return await UserModel.findOne({email});
-        }catch(err){
-            console.log(err);
-        }
-    }
+    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, "secret"); // same secret as login
+    const user = await UserModel.findById(decoded._id);
+    if (!user) return res.status(404).json({ status: false, error: "User not found" });
 
-    static async checkUser(email){
-        try {
-            return await UserModel.findOne({email});
-        } catch (error) {
-            throw error;
-        }
-    }
+    req.user = user;
+    next();
+  } catch (err) {
+    return res.status(403).json({ status: false, error: "Unauthorized" });
+  }
+};
 
-    static async generateAccessToken(tokenData,JWTSecret_Key,JWT_EXPIRE){
-        return jwt.sign(tokenData, JWTSecret_Key, { expiresIn: JWT_EXPIRE });
-    }
-}
-
-module.exports = UserServices;
+// Export both
+module.exports = { UserServices, verifyToken };

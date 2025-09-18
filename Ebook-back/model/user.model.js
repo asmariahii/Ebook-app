@@ -16,7 +16,13 @@ const userSchema = new mongoose.Schema({
     password: {
         type: String,
         required: [true, "Password is required"]
-    }
+     },
+  favorites: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Book",
+    },
+  ],
 }, { timestamps: true });
 
 // Encrypt password before saving

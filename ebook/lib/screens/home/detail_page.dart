@@ -1,3 +1,4 @@
+import 'package:ebook/controllers/book_controller.dart'; // ADD THIS IMPORT
 import 'package:ebook/models/book_model.dart';
 import 'package:ebook/utils/constants/colors.dart';
 import 'package:flutter/cupertino.dart';
@@ -5,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:readmore/readmore.dart';
 import '../../pages/pdf_view_page.dart';
+import 'package:get/get.dart'; // ADD THIS FOR Obx
 
 class Detailpage extends StatefulWidget {
   const Detailpage({super.key, required this.bookModel});
@@ -15,6 +17,8 @@ class Detailpage extends StatefulWidget {
 }
 
 class _DetailpageState extends State<Detailpage> {
+  final BookController bookController = BookController.instance; // ADD THIS
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -58,10 +62,40 @@ class _DetailpageState extends State<Detailpage> {
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    IconButton(
-                      onPressed: () {},
-                      icon: const Icon(CupertinoIcons.heart),
-                    ),
+                    // REPLACE YOUR EMPTY HEART BUTTON WITH THIS
+                    Obx(() {
+                      bool isFavorite = bookController.isBookInFavorites(widget.bookModel.id);
+                      return IconButton(
+                        onPressed: () async {
+                          print("🔥 Heart button pressed for book: ${widget.bookModel.id}");
+                          bool success = await bookController.addToFavorites(widget.bookModel.id);
+                          
+                          if (success) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Added to favorites ❤️"),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Failed to add to favorites"),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                        icon: Icon(
+                          isFavorite ? CupertinoIcons.heart_fill : CupertinoIcons.heart,
+                          color: isFavorite ? Colors.red : null,
+                          size: 24,
+                        ),
+                        tooltip: isFavorite ? "Remove from favorites" : "Add to favorites",
+                      );
+                    }),
+
+                    // Keep all your other buttons unchanged
                     IconButton(
                       onPressed: () {},
                       icon: const Icon(CupertinoIcons.download_circle),
@@ -78,27 +112,26 @@ class _DetailpageState extends State<Detailpage> {
                         color: TColors.primary,
                       ),
                     ),
-                    // PDF button
-IconButton(
-  onPressed: () {
-    if (widget.bookModel.file.isNotEmpty) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PdfViewPage(
-            url: widget.bookModel.file, // just use the file URL
-          ),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("PDF not available")),
-      );
-    }
-  },
-  icon: Icon(CupertinoIcons.doc_text, color: TColors.primary),
-),
-
+                    // PDF button (keep unchanged)
+                    IconButton(
+                      onPressed: () {
+                        if (widget.bookModel.file.isNotEmpty) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PdfViewPage(
+                                url: widget.bookModel.file,
+                              ),
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("PDF not available")),
+                          );
+                        }
+                      },
+                      icon: Icon(CupertinoIcons.doc_text, color: TColors.primary),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 10),
