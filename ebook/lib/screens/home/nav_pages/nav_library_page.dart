@@ -34,6 +34,196 @@ class _NavLibraryPageState extends State<NavLibraryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // ✨ Subtle gradient background for the entire body
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFFF8F9FA),
+              Color(0xFFFEF8F8),
+            ],
+          ),
+        ),
+        child: Obx(() {
+          // Show loading state
+          if (bookController.isLoadingFavorites.value) {
+            return const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    "Loading your favorites...",
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          // Show empty state
+          if (bookController.userFavorites.isEmpty) {
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
+                    ),
+                    child: IntrinsicHeight(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Spacer(flex: 1),
+                          // ✨ Enhanced empty icon with gradient background
+                          Container(
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [Colors.red.withOpacity(0.1), Colors.orange.withOpacity(0.1)],
+                              ),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.red.withOpacity(0.3)),
+                            ),
+                            child: Icon(
+                              CupertinoIcons.heart_slash,
+                              size: 80,
+                              color: Colors.red[400],
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          Text(
+                            "Your Library is Empty",
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey[800],
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 48),
+                            child: Text(
+                              "Start building your collection by adding books to favorites. Tap the heart icon ❤️ on any book details page.",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey[600],
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: TColors.primary.withOpacity(0.2),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  // Navigate to home or books list
+                                  Get.back(); // or Get.offAll(HomePage());
+                                },
+                                icon: const Icon(Icons.library_books_outlined),
+                                label: const Text("Browse Books"),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: TColors.primary,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 16,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  elevation: 2,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const Spacer(flex: 2),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            );
+          }
+
+          // Show favorites list
+          return RefreshIndicator(
+            onRefresh: _loadFavorites,
+            color: TColors.primary,
+            backgroundColor: Colors.white,
+            displacement: 60,
+            child: CustomScrollView(
+              slivers: [
+                // ✨ Enhanced section header with gradient badge
+                SliverToBoxAdapter(
+                  child: Container(
+                    margin: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.red.withOpacity(0.1), Colors.orange.withOpacity(0.05)],
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.red.withOpacity(0.2)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          CupertinoIcons.heart_fill,
+                          color: Colors.red,
+                          size: 24,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          "Favorites (${bookController.userFavorites.length})",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final bookId = bookController.userFavorites[index];
+                        return _buildFavoriteBookCard(bookId);
+                      },
+                      childCount: bookController.userFavorites.length,
+                    ),
+                  ),
+                ),
+                const SliverToBoxAdapter(
+                  child: SizedBox(height: 100), // Bottom padding
+                ),
+              ],
+            ),
+          );
+        }),
+      ),
+      // ✨ Enhanced AppBar with subtle shadow
       appBar: AppBar(
         title: const Text(
           "My Library",
@@ -45,176 +235,56 @@ class _NavLibraryPageState extends State<NavLibraryPage> {
         ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
-        elevation: 0,
+        elevation: 1,
+        shadowColor: Colors.black.withOpacity(0.1),
         centerTitle: true,
         actions: [
-          // Refresh button
-          IconButton(
-            onPressed: () async {
-              setState(() {
-                // Show loading during refresh
-              });
-              await _loadFavorites();
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Favorites refreshed"),
-                    duration: Duration(seconds: 1),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-              }
-            },
-            icon: const Icon(Icons.refresh),
-            tooltip: "Refresh favorites",
-          ),
-        ],
-      ),
-      body: Obx(() {
-        // Show loading state
-        if (bookController.isLoadingFavorites.value) {
-          return const Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
-                ),
-                SizedBox(height: 16),
-                Text(
-                  "Loading your favorites...",
-                  style: TextStyle(fontSize: 16, color: Colors.grey),
+          // Refresh button with styled container
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
-          );
-        }
-
-        // Show empty state
-        if (bookController.userFavorites.isEmpty) {
-          return LayoutBuilder(
-            builder: (context, constraints) {
-              return SingleChildScrollView(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: constraints.maxHeight,
-                  ),
-                  child: IntrinsicHeight(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Spacer(flex: 1),
-                        Icon(
-                          CupertinoIcons.heart_slash,
-                          size: 80,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 24),
-                        Text(
-                          "Your Library is Empty",
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey[800],
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 48),
-                          child: Text(
-                            "Start building your collection by adding books to favorites. Tap the heart icon ❤️ on any book details page.",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[600],
-                              height: 1.4,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              // Navigate to home or books list
-                              Get.back(); // or Get.offAll(HomePage());
-                            },
-                            icon: const Icon(Icons.library_books_outlined),
-                            label: const Text("Browse Books"),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: TColors.primary,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 16,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              elevation: 2,
-                            ),
-                          ),
-                        ),
-                        const Spacer(flex: 2),
-                      ],
+            child: IconButton(
+              onPressed: () async {
+                setState(() {
+                  // Show loading during refresh
+                });
+                await _loadFavorites();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(Icons.refresh, size: 20, color: Colors.white),
+                          SizedBox(width: 8),
+                          Text("Favorites refreshed", style: TextStyle(color: Colors.white)),
+                        ],
+                      ),
+                      duration: const Duration(seconds: 1),
+                      backgroundColor: Colors.green,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
-                  ),
-                ),
-              );
-            },
-          );
-        }
-
-        // Show favorites list
-        return RefreshIndicator(
-          onRefresh: _loadFavorites,
-          color: TColors.primary,
-          backgroundColor: Colors.white,
-          displacement: 60,
-          child: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Icon(
-                        CupertinoIcons.heart_fill,
-                        color: Colors.red,
-                        size: 24,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        "Favorites (${bookController.userFavorites.length})",
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final bookId = bookController.userFavorites[index];
-                      return _buildFavoriteBookCard(bookId);
-                    },
-                    childCount: bookController.userFavorites.length,
-                  ),
-                ),
-              ),
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 100), // Bottom padding
-              ),
-            ],
+                  );
+                }
+              },
+              icon: const Icon(Icons.refresh, color: Colors.red),
+              tooltip: "Refresh favorites",
+            ),
           ),
-        );
-      }),
+        ],
+      ),
     );
   }
 
@@ -247,9 +317,18 @@ class _NavLibraryPageState extends State<NavLibraryPage> {
     return Container(
       height: 100,
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        // ✨ Subtle gradient for loading card
+        gradient: LinearGradient(
+          colors: [Colors.white, Colors.grey[50]!],
+        ),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -259,7 +338,9 @@ class _NavLibraryPageState extends State<NavLibraryPage> {
             height: 80,
             margin: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.grey[200],
+              gradient: LinearGradient(
+                colors: [Colors.grey[200]!, Colors.grey[300]!],
+              ),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Center(
@@ -282,7 +363,9 @@ class _NavLibraryPageState extends State<NavLibraryPage> {
                     width: double.infinity,
                     height: 16,
                     decoration: BoxDecoration(
-                      color: Colors.grey[300],
+                      gradient: LinearGradient(
+                        colors: [Colors.grey[300]!, Colors.grey[400]!],
+                      ),
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -291,7 +374,9 @@ class _NavLibraryPageState extends State<NavLibraryPage> {
                     width: 120,
                     height: 12,
                     decoration: BoxDecoration(
-                      color: Colors.grey[300],
+                      gradient: LinearGradient(
+                        colors: [Colors.grey[300]!, Colors.grey[400]!],
+                      ),
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -310,7 +395,9 @@ class _NavLibraryPageState extends State<NavLibraryPage> {
                   height: 24,
                   margin: const EdgeInsets.only(bottom: 4),
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    gradient: LinearGradient(
+                      colors: [Colors.grey[300]!, Colors.grey[400]!],
+                    ),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -318,7 +405,9 @@ class _NavLibraryPageState extends State<NavLibraryPage> {
                   width: 20,
                   height: 20,
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    gradient: LinearGradient(
+                      colors: [Colors.grey[300]!, Colors.grey[400]!],
+                    ),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -337,6 +426,8 @@ class _NavLibraryPageState extends State<NavLibraryPage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
+      // ✨ Red-themed gradient background
+      color: Colors.red[50],
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () => _showBookErrorDialog(context, bookId, error),
@@ -349,7 +440,9 @@ class _NavLibraryPageState extends State<NavLibraryPage> {
                 width: 60,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: Colors.red[50],
+                  gradient: LinearGradient(
+                    colors: [Colors.red[100]!, Colors.red[200]!],
+                  ),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
@@ -364,12 +457,12 @@ class _NavLibraryPageState extends State<NavLibraryPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       "Failed to load book",
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
-                        color: Colors.red,
+                        color: Colors.red[800],
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -394,18 +487,24 @@ class _NavLibraryPageState extends State<NavLibraryPage> {
                 ),
               ),
               // Remove button
-              IconButton(
-                onPressed: () async {
-                  await _removeFromFavorites(bookId, context);
-                },
-                icon: const Icon(
-                  CupertinoIcons.heart_slash_fill,
-                  color: Colors.red,
-                  size: 24,
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.red[100],
+                  shape: BoxShape.circle,
                 ),
-                tooltip: "Remove from favorites",
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
+                child: IconButton(
+                  onPressed: () async {
+                    await _removeFromFavorites(bookId, context);
+                  },
+                  icon: const Icon(
+                    CupertinoIcons.heart_slash_fill,
+                    color: Colors.red,
+                    size: 24,
+                  ),
+                  tooltip: "Remove from favorites",
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
               ),
             ],
           ),
@@ -421,6 +520,8 @@ class _NavLibraryPageState extends State<NavLibraryPage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
+      // ✨ Subtle gradient for book cards
+      color: Colors.white,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
@@ -436,45 +537,65 @@ class _NavLibraryPageState extends State<NavLibraryPage> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Book cover
+              // Book cover with shadow
               Hero(
                 tag: 'book_cover_${book.id}',
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    book.cover ?? '',
-                    width: 60,
-                    height: 80,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        width: 60,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          Icons.book_outlined,
-                          size: 30,
-                          color: Colors.grey[600],
-                        ),
-                      );
-                    },
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Container(
-                        width: 60,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Center(
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      );
-                    },
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      book.cover ?? '',
+                      width: 60,
+                      height: 80,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: 60,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [Colors.grey[300]!, Colors.grey[400]!],
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.book_outlined,
+                            size: 30,
+                            color: Colors.grey[600],
+                          ),
+                        );
+                      },
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          width: 60,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [Colors.grey[200]!, Colors.grey[300]!],
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Center(
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
               ),
@@ -518,43 +639,55 @@ class _NavLibraryPageState extends State<NavLibraryPage> {
                   ],
                 ),
               ),
-              // Action buttons
+              // Action buttons with styled containers
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   // Remove button
-                  IconButton(
-                    onPressed: () async {
-                      await _removeFromFavorites(bookId, context);
-                    },
-                    icon: const Icon(
-                      CupertinoIcons.heart_slash_fill,
-                      color: Colors.red,
-                      size: 24,
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.red[50],
+                      shape: BoxShape.circle,
                     ),
-                    tooltip: "Remove from library",
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
+                    child: IconButton(
+                      onPressed: () async {
+                        await _removeFromFavorites(bookId, context);
+                      },
+                      icon: const Icon(
+                        CupertinoIcons.heart_slash_fill,
+                        color: Colors.red,
+                        size: 24,
+                      ),
+                      tooltip: "Remove from library",
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
                   ),
                   const SizedBox(height: 4),
                   // View details button
-                  IconButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => Detailpage(bookModel: book),
-                        ),
-                      );
-                    },
-                    icon: Icon(
-                      CupertinoIcons.eye,
-                      color: TColors.primary,
-                      size: 20,
+                  Container(
+                    decoration: BoxDecoration(
+                      color: TColors.primary.withOpacity(0.1),
+                      shape: BoxShape.circle,
                     ),
-                    tooltip: "View details",
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
+                    child: IconButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => Detailpage(bookModel: book),
+                          ),
+                        );
+                      },
+                      icon: Icon(
+                        CupertinoIcons.eye,
+                        color: TColors.primary,
+                        size: 20,
+                      ),
+                      tooltip: "View details",
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
                   ),
                 ],
               ),
@@ -572,18 +705,28 @@ class _NavLibraryPageState extends State<NavLibraryPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16), // ✨ Larger radius for modern look
           ),
-          title: const Row(
-            children: [
-              Icon(
-                CupertinoIcons.heart_slash_fill,
-                color: Colors.red,
-                size: 24,
+          // ✨ Gradient title background
+          title: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.red[50]!, Colors.red[100]!],
               ),
-              SizedBox(width: 8),
-              Text("Remove from Library"),
-            ],
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Row(
+              children: [
+                Icon(
+                  CupertinoIcons.heart_slash_fill,
+                  color: Colors.red,
+                  size: 24,
+                ),
+                SizedBox(width: 8),
+                Text("Remove from Library"),
+              ],
+            ),
           ),
           content: const Text(
             "Are you sure you want to remove this book from your favorites? This action cannot be undone.",
@@ -597,13 +740,21 @@ class _NavLibraryPageState extends State<NavLibraryPage> {
                 style: TextStyle(color: Colors.grey),
               ),
             ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text(
-                "Remove",
-                style: TextStyle(
-                  color: Colors.red,
-                  fontWeight: FontWeight.w600,
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.red[500]!, Colors.red[600]!],
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text(
+                  "Remove",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
@@ -620,7 +771,14 @@ class _NavLibraryPageState extends State<NavLibraryPage> {
         if (success) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text("Removed from library 💔"),
+              content: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Icon(Icons.favorite_border, color: Colors.white, size: 20),
+                  SizedBox(width: 8),
+                  Text("Removed from library 💔", style: TextStyle(color: Colors.white)),
+                ],
+              ),
               backgroundColor: Colors.red,
               duration: const Duration(seconds: 2),
               behavior: SnackBarBehavior.floating,
@@ -659,18 +817,28 @@ class _NavLibraryPageState extends State<NavLibraryPage> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16), // ✨ Larger radius
         ),
-        title: const Row(
-          children: [
-            Icon(
-              Icons.error_outline,
-              color: Colors.red,
-              size: 24,
+        // ✨ Gradient title background
+        title: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.red[50]!, Colors.red[100]!],
             ),
-            SizedBox(width: 8),
-            Text("Book Load Error"),
-          ],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Row(
+            children: [
+              Icon(
+                Icons.error_outline,
+                color: Colors.red,
+                size: 24,
+              ),
+              SizedBox(width: 8),
+              Text("Book Load Error"),
+            ],
+          ),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -697,8 +865,9 @@ class _NavLibraryPageState extends State<NavLibraryPage> {
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 16),
-            const Text(
-              "You can still remove this book from your library."
+            Text(
+              "You can still remove this book from your library.",
+              style: TextStyle(color: Colors.grey[600]),
             ),
           ],
         ),

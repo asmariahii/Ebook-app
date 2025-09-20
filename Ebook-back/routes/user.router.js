@@ -13,6 +13,14 @@ router.post("/favorites/remove", verifyToken, UserController.removeFromFavorites
 router.post("/favorites/check", verifyToken, UserController.isFavorite);
 router.post("/favorites/toggle", verifyToken, UserController.toggleFavorite);
 
+// Profile routes
+router.get('/profile', verifyToken, UserController.getProfile);
+router.put('/profile', verifyToken, UserController.updateProfile);
 
-
-module.exports = router;
+// Profile picture route - RECEIVE UPLOAD AS PARAMETER
+module.exports = (upload) => {
+  // Profile picture route
+  router.post('/profile/picture', verifyToken, upload.single('profilePicture'), UserController.updateProfilePicture);
+  
+  return router;
+};

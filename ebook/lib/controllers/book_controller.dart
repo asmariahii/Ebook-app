@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../config.dart';
 import '../models/book_model.dart';
+import 'dart:math' as math;
 
 class BookController extends GetxController {
   static BookController get instance => Get.find();
@@ -272,6 +273,55 @@ class BookController extends GetxController {
       isLoadingFavorites.value = false;
     }
   }
+
+  // 🔍 Search books by title or author
+Future<List<BookModel>> searchBooks(String query) async {
+  try {
+    if (query.trim().isEmpty) {
+      return []; // Return empty list for empty query
+    }
+
+    print("🔍 Searching for: '$query'");
+    
+    final response = await http.get(
+      Uri.parse("$booksUrl/search?q=${Uri.encodeComponent(query)}"),
+      headers: {"Content-Type": "application/json"},
+    );
+
+    print("📡 Search response: ${response.statusCode}");
+
+    if (response.statusCode == 200) {
+      final jsonResponse = jsonDecode(response.body);
+      if (jsonResponse['status'] == true) {
+        final data = jsonResponse['data'] as List;
+        final searchResults = data.map((e) => BookModel.fromJson(e)).toList();
+        print("✅ Found ${searchResults.length} search results");
+        return searchResults;
+      } else {
+        print("❌ Search failed: ${jsonResponse['error']}");
+        return [];
+      }
+    } else {
+      print("❌ Search HTTP Error: ${response.statusCode}");
+      return [];
+    }
+  } catch (e) {
+    print("❌ Search error: $e");
+    return [];
+  }
+}
+
+// Observable for search results
+var searchResults = <BookModel>[].obs;
+var isSearching = false.obs;
+var searchQuery = ''.obs;
+
+// Clear search results
+void clearSearch() {
+  searchResults.clear();
+  searchQuery.value = '';
+  isSearching.value = false;
+}
 
   // Clear favorites (for logout)
   void clearFavorites() {

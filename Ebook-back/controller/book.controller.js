@@ -73,3 +73,53 @@ exports.getBookById = async (req, res) => {
     });
   }
 };
+
+exports.searchBooks = async (req, res) => {
+  try {
+    const { q } = req.query;
+    
+    console.log("🔍 Search query received:", q);
+    
+    if (!q || typeof q !== 'string' || q.trim() === '') {
+      console.log("❌ Empty search query");
+      return res.status(400).json({ 
+        status: false, 
+        error: "Search query is required" 
+      });
+    }
+
+    const searchTerm = q.trim();
+    console.log("🔍 Searching for:", searchTerm);
+
+    const searchQuery = {
+      $or: [
+        { title: { $regex: searchTerm, $options: 'i' } },
+        { author: { $regex: searchTerm, $options: 'i' } }
+      ]
+    };
+
+    console.log("🔍 MongoDB query:", JSON.stringify(searchQuery));
+
+    const books = await Book.find(searchQuery)
+      .select('-__v')
+      .limit(50)
+      .sort({ createdAt: -1 });
+
+    console.log(`✅ Found ${books.length} books for query: "${searchTerm}"`);
+
+    res.json({
+      status: true,
+      data: books,
+      count: books.length,
+      query: searchTerm
+    });
+
+  } catch (error) {
+    console.error("❌ Search error details:", error);
+    res.status(500).json({ 
+      status: false, 
+      error: "Search failed",
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
