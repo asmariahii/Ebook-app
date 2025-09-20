@@ -17,6 +17,7 @@ class BookController extends GetxController {
   var userFavorites = <String>[].obs;
   var isLoadingFavorites = false.obs; // ← FIXED: Now observable!
 
+
   // Your existing methods
   Future<void> fetchAllBooks() async {
     try {
@@ -77,6 +78,8 @@ class BookController extends GetxController {
     }
     return null;
   }
+
+  
 
   // Get token from SharedPreferences
   Future<String?> _getToken() async {

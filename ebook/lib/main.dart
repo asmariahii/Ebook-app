@@ -1,4 +1,5 @@
 import 'package:ebook/controllers/profile_controller.dart';
+import 'package:ebook/screens/admin_page.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,7 +20,7 @@ void main() async {
   // Register controllers
   Get.put(AuthController());
   Get.put(BookController());
-  Get.put(ProfileController()); 
+  Get.put(ProfileController());
 
   runApp(MyApp(token: mytoken));
 }
@@ -28,13 +29,26 @@ class MyApp extends StatelessWidget {
   final String? token;
   const MyApp({super.key, this.token});
 
-  @override
+  // UPDATE your MyApp build method
+ @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
-      home: token != null && !JwtDecoder.isExpired(token!)
-          ? RoutePages(token: token!)
-          : SigninPage(),
+      home: FutureBuilder<String?>(
+        future: AuthController.instance.getUserRole(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError || token == null || JwtDecoder.isExpired(token!)) {
+            return SigninPage();
+          }
+          if (snapshot.hasData && snapshot.data == 'admin') {
+            return AdminDashboard();
+          }
+          return RoutePages(token: token!);
+        },
+      ),
     );
   }
 }

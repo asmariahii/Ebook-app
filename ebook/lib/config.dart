@@ -16,3 +16,13 @@ const searchUrl = "${baseUrl}books/search";
 const profileUrl = "${baseUrl}auth/profile";
 const updateProfileUrl = "${baseUrl}auth/profile";
 
+//ADMIN
+const adminUsersUrl = "${baseUrl}auth/users";  // GET all users
+const adminDeleteUserUrl = "${baseUrl}auth/users"; // DELETE user
+
+const adminBooksUrl = "${baseUrl}books";  // GET all books (admin)
+const adminAddBookUrl = "${baseUrl}books/add"; // POST new book (admin)
+const adminDeleteBookUrl = "${baseUrl}books"; // DELETE book (admin)
+
+const uploadCoverUrl = "${baseUrl}upload/cover";      // Upload book cover image
+const uploadPdfUrl = "${baseUrl}upload/pdf";

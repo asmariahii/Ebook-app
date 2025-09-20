@@ -57,15 +57,18 @@ class _NavHomePageState extends State<NavHomePage> {
     try {
       final books = await BookService.fetchBooks();
       final trending = await BookService.fetchTrending();
-      setState(() {
-        allBooks = books;
-        trendingBooks = trending;
-        isLoading = false;
-      });
+if (mounted) {
+  setState(() {
+    allBooks = books;
+    trendingBooks = trending;
+    isLoading = false;
+  });
+}
     } catch (e) {
       print("Error fetching books: $e");
-      setState(() => isLoading = false);
-    }
+if (mounted) {
+  setState(() => isLoading = false);
+}    }
   }
 
   @override

@@ -2,6 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const UserRoute = require("./routes/user.router");
 const bookRoutes = require("./routes/book.routes");
+const { uploadCover, uploadPdf } = require("./routes/upload.routes");
 const path = require("path");
 const multer = require('multer');
 const cors = require("cors");
@@ -55,6 +56,9 @@ app.use("/uploads", express.static(path.join(__dirname, "assets/images")));
 app.use("/auth", UserRoute(upload));
 app.use("/books", bookRoutes);
 
+
+app.post('/upload/cover', uploadCover);
+app.post('/upload/pdf', uploadPdf);
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err);

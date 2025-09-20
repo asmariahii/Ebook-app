@@ -16,5 +16,5 @@ router.get("/search", bookController.searchBooks);
 
 router.get("/:id", bookController.getBookById);
 
-
+router.delete('/:id', bookController.deleteBook);
 module.exports = router;

@@ -17,6 +17,11 @@ router.post("/favorites/toggle", verifyToken, UserController.toggleFavorite);
 router.get('/profile', verifyToken, UserController.getProfile);
 router.put('/profile', verifyToken, UserController.updateProfile);
 
+
+//admin
+router.get('/users', verifyToken, UserController.getAllUsers);
+router.delete('/users/:userId', verifyToken, UserController.deleteUser);
+
 // Profile picture route - RECEIVE UPLOAD AS PARAMETER
 module.exports = (upload) => {
   // Profile picture route

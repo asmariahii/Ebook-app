@@ -123,3 +123,29 @@ exports.searchBooks = async (req, res) => {
     });
   }
 };
+
+// Add this to your book.controller.js
+exports.deleteBook = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Check if user is admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ status: false, error: 'Admin access required' });
+    }
+
+    const book = await Book.findByIdAndDelete(id);
+    if (!book) {
+      return res.status(404).json({ status: false, error: 'Book not found' });
+    }
+
+    res.status(200).json({ 
+      status: true, 
+      success: 'Book deleted successfully',
+      data: { deletedBookId: id }
+    });
+  } catch (err) {
+    console.error('❌ DELETE BOOK ERROR:', err);
+    res.status(500).json({ status: false, error: err.message });
+  }
+};

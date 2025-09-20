@@ -44,8 +44,7 @@ exports.login = async (req, res, next) => {
         }
 
         // Creating Token
-        let tokenData = { _id: user._id, email: user.email, name: user.name };
-    
+let tokenData = { _id: user._id, email: user.email, name: user.name, role: user.role };  // ADD role: user.role    
         const token = await UserServices.generateAccessToken(tokenData,"secret","1h")
 
         res.status(200).json({ status: true, success: "sendData", token: token });
@@ -352,6 +351,60 @@ const updateProfilePicture = async (req, res) => {
     res.status(500).json({ status: false, error: err.message });
   }
 };
+
+// GET ALL USERS (for admin only)
+exports.getAllUsers = async (req, res) => {
+  try {
+    // Check if user is admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ status: false, error: 'Access denied. Admin only' });
+    }
+
+    const users = await User.find()
+      .select('-password') // Exclude password
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({ 
+      status: true, 
+      data: users,
+      count: users.length 
+    });
+  } catch (err) {
+    console.error('❌ GET ALL USERS ERROR:', err);
+    res.status(500).json({ status: false, error: err.message });
+  }
+};
+
+// DELETE USER (for admin only)
+exports.deleteUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    // Check if user is admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ status: false, error: 'Access denied. Admin only' });
+    }
+
+    // Prevent admin from deleting themselves
+    if (req.user._id.toString() === userId) {
+      return res.status(400).json({ status: false, error: 'Cannot delete yourself' });
+    }
+
+    const user = await User.findByIdAndDelete(userId);
+    if (!user) {
+      return res.status(404).json({ status: false, error: 'User not found' });
+    }
+
+    res.status(200).json({ 
+      status: true, 
+      success: 'User deleted successfully',
+      data: { deletedUserId: userId }
+    });
+  } catch (err) {
+    console.error('❌ DELETE USER ERROR:', err);
+    res.status(500).json({ status: false, error: err.message });
+  }
+};
 // Export all methods
 module.exports = {
   register: exports.register,
@@ -361,7 +414,9 @@ module.exports = {
   removeFromFavorites: exports.removeFromFavorites,
   isFavorite: exports.isFavorite,
   toggleFavorite: exports.toggleFavorite,
-  toggleFavorite: exports.toggleFavorite,
+  deleteUser: exports.deleteUser,
+  getAllUsers: exports.getAllUsers,
+
   getProfile,
   updateProfile,
   updateProfilePicture

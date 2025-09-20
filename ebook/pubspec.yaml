@@ -44,6 +44,8 @@ dependencies:
   jwt_decoder: ^2.0.1
   pdfx: any
   flutter_staggered_animations: any
+  image_picker: any
+  file_picker: any
 
 
 

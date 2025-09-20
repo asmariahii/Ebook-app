@@ -1,3 +1,4 @@
+import 'package:ebook/screens/admin_page.dart';
 import 'package:ebook/screens/home/route_pages.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -26,10 +27,6 @@ class _SigninPageState extends State<SigninPage> {
   final AuthController controller = Get.put(AuthController());
   late SharedPreferences prefs;
 
-  void initSharedPref() async {
-    prefs = await SharedPreferences.getInstance();
-  }
-
   @override
   void initState() {
     _emailController = TextEditingController();
@@ -45,6 +42,10 @@ class _SigninPageState extends State<SigninPage> {
     super.dispose();
   }
 
+  Future<void> initSharedPref() async {
+    prefs = await SharedPreferences.getInstance();
+  }
+
   void _submitForm() async {
     if (_formKey.currentState!.validate()) {
       final user = UserModel(
@@ -56,13 +57,25 @@ class _SigninPageState extends State<SigninPage> {
 
       if (result['status'] == true) {
         String token = result['token'];
-        prefs.setString('token', token);
+        await prefs.setString('authToken', token); // Ensure token is saved
 
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => RoutePages(token: token)),
-          (route) => false,
-        );
+        // Get the role after login
+        String? role = await AuthController.instance.getUserRole();
+
+        // Navigate based on role
+        if (role == 'admin') {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => AdminDashboard()),
+            (route) => false,
+          );
+        } else {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => RoutePages(token: token)),
+            (route) => false,
+          );
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(result['error'])),

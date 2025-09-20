@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // ADD THIS
 import 'package:ebook/config.dart';
 import 'package:ebook/models/user_model.dart';
@@ -137,6 +138,24 @@ Future<Map<String, dynamic>?> getSavedProfile() async {
     return jsonDecode(profileString);
   }
   return null;
+}
+
+
+// ADD THIS METHOD to your AuthController class
+Future<String?> getUserRole() async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('authToken');
+    
+    if (token == null) return null;
+    
+    // Decode JWT token to get role
+    Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+    return decodedToken['role'];
+  } catch (e) {
+    print('Error decoding token: $e');
+    return null;
+  }
 }
 
 Future<void> clearUserData() async {
