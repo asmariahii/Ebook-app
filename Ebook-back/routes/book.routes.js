@@ -2,19 +2,15 @@ const express = require("express");
 const router = express.Router();
 const bookController = require("../controller/book.controller");
 
-// Add new book
+// Specific routes first
 router.post("/add", bookController.addBook);
-
-// Get all books
 router.get("/", bookController.getBooks);
-
-// Get trending books
 router.get("/trending", bookController.getTrending);
-
 router.get("/search", bookController.searchBooks);
+router.get("/analytics", bookController.getAnalytics); 
 
-
+// Dynamic routes last
 router.get("/:id", bookController.getBookById);
+router.delete("/:id", bookController.deleteBook);
 
-router.delete('/:id', bookController.deleteBook);
 module.exports = router;

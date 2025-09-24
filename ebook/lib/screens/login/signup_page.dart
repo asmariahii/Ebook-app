@@ -71,137 +71,219 @@ class _SignupPageState extends State<SignupPage> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
+        backgroundColor: const Color(0xFFF8F9FA), // Soft off-white background
         appBar: AppBar(
           title: Text(
-            "E-Book App",
+            "",
             style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: TColors.primary,
+              fontWeight: FontWeight.w700,
+              color: const Color.fromARGB(255, 94, 184, 100), // Teal accent
+              fontSize: 26,
+              fontFamily: 'Poppins',
             ),
           ),
           centerTitle: true,
           backgroundColor: Colors.white,
-          foregroundColor: TColors.primary,
+          elevation: 0,
+          shadowColor: Colors.transparent,
         ),
         body: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
           width: double.infinity,
           child: SingleChildScrollView(
             child: Form(
               key: _formKey,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Center(
-                    child: Icon(Icons.menu_book, size: 80, color: TColors.primary),
+                  // Logo
+                  Hero(
+                    tag: 'logo',
+                    child: Image.asset(
+                      'images/ebook.png',
+                      height: 120,
+                      width: 120,
+                      fit: BoxFit.contain,
+                    ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
                   Text(
-                    "Hello! Register to explore your E-Books 📚",
-                    style: Theme.of(context).textTheme.headlineSmall,
+                    "Welcome to NextPage! 📖",
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: const Color.fromARGB(255, 81, 147, 86), // Deep teal
+                          fontSize: 26,
+                          fontFamily: 'Poppins',
+                        ),
+                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 32),
 
                   // Username
-                  TextFormField(
+                  _buildTextField(
                     controller: _usernameController,
-                    maxLines: 1,
-                    decoration: const InputDecoration(
-                      labelText: "Enter your username",
-                      prefixIcon: Icon(Icons.person_outline_rounded),
-                    ),
-                    validator: MultiValidator([
+                    label: "Username",
+                    icon: Icons.person_outline_rounded,
+                    validators: [
                       RequiredValidator(errorText: "* Required"),
-                    ]).call,
+                    ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 20),
 
                   // Email
-                  TextFormField(
+                  _buildTextField(
                     controller: _emailController,
-                    maxLines: 1,
-                    decoration: const InputDecoration(
-                      labelText: "Enter your email",
-                      prefixIcon: Icon(Icons.email_outlined),
-                    ),
-                    validator: MultiValidator([
+                    label: "Email",
+                    icon: Icons.email_outlined,
+                    validators: [
                       RequiredValidator(errorText: "* Required"),
                       EmailValidator(errorText: "Please enter a valid email address"),
-                    ]).call,
+                    ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 20),
 
                   // Password
-                  TextFormField(
+                  _buildTextField(
                     controller: _passwordController,
-                    maxLines: 1,
+                    label: "Password",
+                    icon: Icons.lock,
                     obscureText: _passwordInvisible,
-                    decoration: InputDecoration(
-                      labelText: "Enter your password",
-                      prefixIcon: const Icon(Icons.lock),
-                      suffixIcon: IconButton(
-                        onPressed: () {
-                          setState(() {
-                            _passwordInvisible = !_passwordInvisible;
-                          });
-                        },
-                        icon: Icon(
-                          _passwordInvisible ? Icons.visibility_off : Icons.visibility,
-                        ),
+                    suffixIcon: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          _passwordInvisible = !_passwordInvisible;
+                        });
+                      },
+                      icon: Icon(
+                        _passwordInvisible ? Icons.visibility_off : Icons.visibility,
+                        color: const Color.fromARGB(255, 63, 110, 62), // Light teal
                       ),
                     ),
-                    validator: MultiValidator([
+                    validators: [
                       RequiredValidator(errorText: "* Required"),
                       MinLengthValidator(6, errorText: "Password must be at least 6 characters."),
                       MaxLengthValidator(15, errorText: "Password must not exceed 15 characters."),
-                    ]).call,
+                    ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 32),
 
                   // Sign up button
-                  ElevatedButton(
-                    onPressed: _submitForm,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: TColors.primary,
-                      minimumSize: const Size(double.infinity, 50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                    child: const Text("Sign up"),
-                  ),
-                  const SizedBox(height: 10),
+                  _buildElevatedButton(),
+                  const SizedBox(height: 24),
 
                   // Go to Sign In
-                  Center(
-                    child: TextButton(
-                      onPressed: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (context) => const SigninPage()),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => const SigninPage()),
                         );
-                      },
-                      child: RichText(
-                        textAlign: TextAlign.center,
-                        text: TextSpan(
-                          style: Theme.of(context).textTheme.bodyMedium,
-                          children: [
-                            const TextSpan(text: "Already have an account? "),
-                            TextSpan(
-                              text: "Login here",
-                              style: TextStyle(
-                                color: TColors.primary,
-                                fontWeight: FontWeight.bold,
-                              ),
+                    },
+                    child: RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.grey[600],
+                              fontSize: 16,
+                              fontFamily: 'Roboto',
                             ),
-                          ],
-                        ),
+                        children: [
+                          const TextSpan(text: "Already have an account? "),
+                          TextSpan(
+                            text: "Login here",
+                            style: TextStyle(
+                              color: const Color.fromARGB(255, 63, 110, 62),
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'Roboto',
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 ],
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool obscureText = false,
+    Widget? suffixIcon,
+    required List<TextFieldValidator> validators,
+  }) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey[200]!.withOpacity(0.5),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: TextFormField(
+        controller: controller,
+        maxLines: 1,
+        obscureText: obscureText,
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: const TextStyle(
+            color: Color.fromARGB(255, 63, 110, 62), // Light teal
+            fontFamily: 'Roboto',
+          ),
+          prefixIcon: Icon(icon, color: const Color.fromARGB(255, 63, 110, 62)),
+          suffixIcon: suffixIcon,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color:  const Color.fromARGB(255, 61, 112, 64)!, // Teal border on focus
+              width: 2,
+            ),
+          ),
+        ),
+        validator: MultiValidator(validators).call,
+      ),
+    );
+  }
+
+  Widget _buildElevatedButton() {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      child: ElevatedButton(
+        onPressed: _submitForm,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color.fromARGB(255, 63, 110, 62), // Teal button
+          minimumSize: const Size(double.infinity, 56),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 6,
+          shadowColor: const Color.fromARGB(255, 63, 110, 62).withOpacity(0.4),
+        ),
+        child: const Text(
+          "Sign up",
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+            fontFamily: 'Poppins',
           ),
         ),
       ),

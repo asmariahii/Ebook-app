@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:ui';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -16,6 +18,9 @@ class BookController extends GetxController {
   // FIXED: Make isLoadingFavorites observable
   var userFavorites = <String>[].obs;
   var isLoadingFavorites = false.obs; // ← FIXED: Now observable!
+
+  var analyticsData = {}.obs; // Store totalBooks, trendingBooks, searches
+  var isLoadingAnalytics = false.obs;
 
 
   // Your existing methods
@@ -330,5 +335,71 @@ void clearSearch() {
   void clearFavorites() {
     userFavorites.clear();
     isLoadingFavorites.value = false;
+  }
+
+  // New method to fetch analytics
+  Future<void> fetchAnalytics() async {
+    try {
+      isLoadingAnalytics.value = true;
+      final token = await _getToken();
+      if (token == null) {
+        print("❌ No token found - user not logged in");
+        Get.snackbar(
+          'Error',
+          'Authentication required',
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: const Color.fromARGB(255, 60, 120, 68),
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      final response = await http.get(
+        Uri.parse('$booksUrl/analytics'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      print("📡 Analytics response: ${response.statusCode}");
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        if (jsonResponse['status'] == true) {
+          analyticsData.value = jsonResponse['data'];
+          print("✅ Analytics loaded: ${analyticsData.value}");
+        } else {
+          print("❌ Analytics failed: ${jsonResponse['error']}");
+          Get.snackbar(
+            'Error',
+            jsonResponse['error'] ?? 'Failed to load analytics',
+            snackPosition: SnackPosition.TOP,
+            backgroundColor: const Color.fromARGB(255, 60, 120, 68),
+            colorText: Colors.white,
+          );
+        }
+      } else {
+        print("❌ HTTP Error fetching analytics: ${response.statusCode}");
+        Get.snackbar(
+          'Error',
+          'Failed to load analytics: ${response.statusCode}',
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: const Color.fromARGB(255, 60, 120, 68),
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      print("❌ Error fetching analytics: $e");
+      Get.snackbar(
+        'Error',
+        'Network error: $e',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: const Color.fromARGB(255, 60, 120, 68),
+        colorText: Colors.white,
+      );
+    } finally {
+      isLoadingAnalytics.value = false;
+    }
   }
 }

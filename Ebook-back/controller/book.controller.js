@@ -78,18 +78,21 @@ exports.searchBooks = async (req, res) => {
   try {
     const { q } = req.query;
     
-    console.log("🔍 Search query received:", q);
+    console.log('🔍 Search query received:', q);
     
     if (!q || typeof q !== 'string' || q.trim() === '') {
-      console.log("❌ Empty search query");
+      console.log('❌ Empty search query');
       return res.status(400).json({ 
         status: false, 
-        error: "Search query is required" 
+        error: 'Search query is required' 
       });
     }
 
     const searchTerm = q.trim();
-    console.log("🔍 Searching for:", searchTerm);
+    console.log('🔍 Searching for:', searchTerm);
+
+    // Track search
+    await BookServices.trackSearch();
 
     const searchQuery = {
       $or: [
@@ -98,7 +101,7 @@ exports.searchBooks = async (req, res) => {
       ]
     };
 
-    console.log("🔍 MongoDB query:", JSON.stringify(searchQuery));
+    console.log('🔍 MongoDB query:', JSON.stringify(searchQuery));
 
     const books = await Book.find(searchQuery)
       .select('-__v')
@@ -113,22 +116,25 @@ exports.searchBooks = async (req, res) => {
       count: books.length,
       query: searchTerm
     });
-
   } catch (error) {
-    console.error("❌ Search error details:", error);
+    console.error('❌ Search error details:', error);
     res.status(500).json({ 
       status: false, 
-      error: "Search failed",
+      error: 'Search failed',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
 
-// Add this to your book.controller.js
 exports.deleteBook = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
+    // Check if user is authenticated
+    if (!req.user) {
+      return res.status(401).json({ status: false, error: 'Unauthorized: No user found' });
+    }
+
     // Check if user is admin
     if (req.user.role !== 'admin') {
       return res.status(403).json({ status: false, error: 'Admin access required' });
@@ -146,6 +152,27 @@ exports.deleteBook = async (req, res) => {
     });
   } catch (err) {
     console.error('❌ DELETE BOOK ERROR:', err);
+    res.status(500).json({ status: false, error: err.message });
+  }
+};
+
+// Add this to your existing book.controller.js
+exports.getAnalytics = async (req, res) => {
+  try {
+    console.log('Handling /books/analytics request');
+    // Removed admin role check to allow all authenticated users
+    const analytics = await BookServices.getAnalytics();
+    console.log('📊 Analytics retrieved:', analytics);
+    res.status(200).json({
+      status: true,
+      data: {
+        totalBooks: analytics.totalBooks,
+        trendingBooks: analytics.trendingBooks,
+        searches: analytics.searches || 0, // Include searches for client
+      },
+    });
+  } catch (err) {
+    console.error('❌ Analytics error:', err.stack);
     res.status(500).json({ status: false, error: err.message });
   }
 };

@@ -375,6 +375,23 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
+// Logout user
+exports.logout = async (req, res) => {
+  try {
+    console.log('🚪 LOGOUT:', { userId: req.user._id });
+
+    // Since JWT is stateless, the client should remove the token
+    // Optionally, you can implement token blacklisting here if needed
+    res.status(200).json({
+      status: true,
+      success: "User logged out successfully",
+    });
+  } catch (err) {
+    console.error('❌ LOGOUT ERROR:', err);
+    res.status(500).json({ status: false, error: err.message });
+  }
+};
+
 // DELETE USER (for admin only)
 exports.deleteUser = async (req, res) => {
   try {
@@ -419,7 +436,8 @@ module.exports = {
 
   getProfile,
   updateProfile,
-  updateProfilePicture
+  updateProfilePicture,
+  logout: exports.logout
 
 
 };

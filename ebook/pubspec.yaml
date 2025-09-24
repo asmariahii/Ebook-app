@@ -46,7 +46,7 @@ dependencies:
   flutter_staggered_animations: any
   image_picker: any
   file_picker: any
-
+  fl_chart: ^0.68.0  # Use this specific version
 
 
 
@@ -70,7 +70,7 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/images/
+    - assets/images/ebook.png
     - assets/icons/
     - assets/fonts/
 
@@ -92,3 +92,4 @@ flutter:
           weight: 600
         - asset: assets/fonts/Poppins-Bold.ttf
           weight: 800
+

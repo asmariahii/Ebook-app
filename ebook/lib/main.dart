@@ -1,5 +1,6 @@
 import 'package:ebook/controllers/profile_controller.dart';
 import 'package:ebook/screens/admin_page.dart';
+import 'package:ebook/screens/login/splash_page.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -41,7 +42,7 @@ class MyApp extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError || token == null || JwtDecoder.isExpired(token!)) {
-            return SigninPage();
+            return SplashPage();
           }
           if (snapshot.hasData && snapshot.data == 'admin') {
             return AdminDashboard();

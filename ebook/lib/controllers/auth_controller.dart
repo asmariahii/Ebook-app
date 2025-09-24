@@ -188,4 +188,44 @@ Future<void> clearUserData() async {
       };
     }
   }
+
+  // Logout function
+Future<Map<String, dynamic>> logout() async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('authToken');
+
+    if (token == null) {
+      return {"status": false, "error": "No token found. Already logged out."};
+    }
+
+    var response = await http.post(
+      Uri.parse("${baseUrl}auth/logout"), // Use the logout endpoint
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token",
+      },
+    );
+
+    var jsonResponse = jsonDecode(response.body);
+
+    if (jsonResponse['status'] == true) {
+      // Clear user data from SharedPreferences
+      await clearUserData();
+      print("✅ User logged out and data cleared");
+      return {
+        "status": true,
+        "success": jsonResponse['success'] ?? "User logged out successfully",
+      };
+    } else {
+      return {
+        "status": false,
+        "error": jsonResponse['error'] ?? "Logout failed",
+      };
+    }
+  } catch (e) {
+    print('Logout error: $e');
+    return {"status": false, "error": "Network error: $e"};
+  }
+}
 }

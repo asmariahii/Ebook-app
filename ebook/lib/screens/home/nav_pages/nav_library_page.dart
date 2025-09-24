@@ -98,7 +98,7 @@ class _NavLibraryPageState extends State<NavLibraryPage> {
                           ),
                           const SizedBox(height: 24),
                           Text(
-                            "Your Library is Empty",
+                            "Your Favorites is Empty",
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.w600,
@@ -226,7 +226,7 @@ class _NavLibraryPageState extends State<NavLibraryPage> {
       // ✨ Enhanced AppBar with subtle shadow
       appBar: AppBar(
         title: const Text(
-          "My Library",
+          "My Favorite Books",
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 20,
@@ -658,7 +658,7 @@ class _NavLibraryPageState extends State<NavLibraryPage> {
                         color: Colors.red,
                         size: 24,
                       ),
-                      tooltip: "Remove from library",
+                      tooltip: "Remove from Favorites",
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                     ),
@@ -724,7 +724,7 @@ class _NavLibraryPageState extends State<NavLibraryPage> {
                   size: 24,
                 ),
                 SizedBox(width: 8),
-                Text("Remove from Library"),
+                Text("Remove from Favorites"),
               ],
             ),
           ),
@@ -776,7 +776,7 @@ class _NavLibraryPageState extends State<NavLibraryPage> {
                 children: const [
                   Icon(Icons.favorite_border, color: Colors.white, size: 20),
                   SizedBox(width: 8),
-                  Text("Removed from library 💔", style: TextStyle(color: Colors.white)),
+                  Text("Removed from Favorites 💔", style: TextStyle(color: Colors.white)),
                 ],
               ),
               backgroundColor: Colors.red,
@@ -790,7 +790,7 @@ class _NavLibraryPageState extends State<NavLibraryPage> {
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text("Failed to remove from library"),
+              content: Text("Failed to remove from Favorites"),
               backgroundColor: Colors.red,
               duration: Duration(seconds: 2),
             ),
@@ -866,7 +866,7 @@ class _NavLibraryPageState extends State<NavLibraryPage> {
             ),
             const SizedBox(height: 16),
             Text(
-              "You can still remove this book from your library.",
+              "You can still remove this book from your Favorites.",
               style: TextStyle(color: Colors.grey[600]),
             ),
           ],

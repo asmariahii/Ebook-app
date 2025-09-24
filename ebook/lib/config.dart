@@ -15,6 +15,7 @@ const searchUrl = "${baseUrl}books/search";
 // PROFILE
 const profileUrl = "${baseUrl}auth/profile";
 const updateProfileUrl = "${baseUrl}auth/profile";
+const logoutUrl = "${baseUrl}auth/logout"; // POST logout
 
 //ADMIN
 const adminUsersUrl = "${baseUrl}auth/users";  // GET all users
@@ -26,3 +27,4 @@ const adminDeleteBookUrl = "${baseUrl}books"; // DELETE book (admin)
 
 const uploadCoverUrl = "${baseUrl}upload/cover";      // Upload book cover image
 const uploadPdfUrl = "${baseUrl}upload/pdf";
+const analyticsUrl = "${baseUrl}books/analytics"; 

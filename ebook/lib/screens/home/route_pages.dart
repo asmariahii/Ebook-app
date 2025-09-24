@@ -40,7 +40,11 @@ class _RoutePagesState extends State<RoutePages> {
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
-          title: SvgPicture.asset("assets/images/logo-spotify.svg", height: 30),
+          title: Image.asset(
+  "assets/images/ebook.png",
+  height: 30,
+),
+
         ),
         bottomNavigationBar: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
@@ -58,7 +62,7 @@ class _RoutePagesState extends State<RoutePages> {
             tabs: const [
               GButton(icon: Icons.home_rounded, text: "Home"),
               GButton(icon: Icons.search_sharp, text: "Search"),
-              GButton(icon: Icons.library_music_outlined, text: "Library"),
+GButton(icon: Icons.menu_book_outlined, text: "Favorites"),
               GButton(icon: Icons.person_outline_rounded, text: "Profile"),
             ],
           ),

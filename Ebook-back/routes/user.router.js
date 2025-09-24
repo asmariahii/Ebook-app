@@ -21,6 +21,7 @@ router.put('/profile', verifyToken, UserController.updateProfile);
 //admin
 router.get('/users', verifyToken, UserController.getAllUsers);
 router.delete('/users/:userId', verifyToken, UserController.deleteUser);
+router.post("/logout", verifyToken, UserController.logout);
 
 // Profile picture route - RECEIVE UPLOAD AS PARAMETER
 module.exports = (upload) => {
